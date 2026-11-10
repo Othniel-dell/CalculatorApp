@@ -1,0 +1,11 @@
+# Build APK
+eas build -p android --profile preview
+
+# Build AAB
+eas build -p android --profile production
+
+# View previous builds
+eas build:list
+
+# Check project configuration
+npx expo-doctor

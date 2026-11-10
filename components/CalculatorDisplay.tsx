@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
 type CalculatorDisplayProps = {
@@ -15,12 +15,19 @@ export default function CalculatorDisplay({
   modeBadge,
 }: CalculatorDisplayProps) {
   const { colors } = useTheme();
+  const { width, height } = useWindowDimensions();
+
+  // Dynamic typography that scales with the screen dimensions
+  const valueFontSize = Math.min(56, Math.max(36, Math.round(Math.min(width, 500) * 0.125)));
+  const expressionFontSize = Math.min(18, Math.max(13, Math.round(Math.min(width, 500) * 0.042)));
+  const minCardHeight = Math.min(130, Math.max(90, Math.round(height * 0.15)));
 
   return (
     <View
       style={[
         styles.card,
         {
+          minHeight: minCardHeight,
           backgroundColor: colors.surface,
           borderColor: colors.border,
         },
@@ -36,7 +43,7 @@ export default function CalculatorDisplay({
         )}
         <Text
           numberOfLines={2}
-          style={[styles.expression, { color: colors.muted }]}
+          style={[styles.expression, { color: colors.muted, fontSize: expressionFontSize }]}
           ellipsizeMode="head"
         >
           {expression || ' '}
@@ -47,8 +54,8 @@ export default function CalculatorDisplay({
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
-          minimumFontScale={0.4}
-          style={[styles.value, { color: colors.text }]}
+          minimumFontScale={0.3}
+          style={[styles.value, { color: colors.text, fontSize: valueFontSize }]}
         >
           {value}
         </Text>
@@ -63,8 +70,8 @@ export default function CalculatorDisplay({
 
 const styles = StyleSheet.create({
   card: {
-    minHeight: 130,
-    marginVertical: 6,
+    flex: 1,
+    marginVertical: 4,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
@@ -89,17 +96,16 @@ const styles = StyleSheet.create({
   },
   expression: {
     flex: 1,
-    fontSize: 16,
     textAlign: 'right',
     marginLeft: 8,
   },
   valueContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'flex-end',
     paddingVertical: 2,
   },
   value: {
-    fontSize: 46,
     fontWeight: '600',
     letterSpacing: -0.5,
     textAlign: 'right',

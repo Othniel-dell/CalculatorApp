@@ -6,6 +6,9 @@ type CalculatorButtonProps = {
   onPress: () => void;
   variant?: 'number' | 'operator' | 'action' | 'accent';
   compact?: boolean;
+  buttonHeight?: number;
+  fontSize?: number;
+  borderRadius?: number;
 };
 
 export default function CalculatorButton({
@@ -13,6 +16,9 @@ export default function CalculatorButton({
   onPress,
   variant = 'number',
   compact = false,
+  buttonHeight,
+  fontSize,
+  borderRadius,
 }: CalculatorButtonProps) {
   const { colors, isDark } = useTheme();
 
@@ -45,6 +51,8 @@ export default function CalculatorButton({
     }
   };
 
+  const computedBorderRadius = borderRadius ?? (compact ? 11 : Math.round((buttonHeight ?? 56) * 0.28));
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -53,7 +61,9 @@ export default function CalculatorButton({
       style={({ pressed }) => [
         styles.button,
         compact ? styles.compactButton : styles.basicButton,
+        buttonHeight !== undefined && { height: buttonHeight },
         {
+          borderRadius: computedBorderRadius,
           backgroundColor: getBackgroundColor(),
           borderColor: isDark ? colors.border : '#E5E7EB',
           borderWidth: variant === 'number' ? 1 : 0,
@@ -67,6 +77,7 @@ export default function CalculatorButton({
         style={[
           styles.label,
           compact ? styles.compactLabel : styles.basicLabel,
+          fontSize !== undefined && { fontSize },
           { color: getTextColor() },
           variant === 'accent' && styles.accentLabelWeight,
         ]}
@@ -84,7 +95,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   basicButton: {
-    height: 52,
+    height: 56,
     margin: 3.5,
     borderRadius: 16,
   },

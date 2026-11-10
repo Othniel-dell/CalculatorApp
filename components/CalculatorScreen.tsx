@@ -1,5 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CalculatorButton from './CalculatorButton';
 import CalculatorDisplay from './CalculatorDisplay';
@@ -29,9 +36,28 @@ const scientificRows = [
 
 export default function CalculatorScreen({ scientific = false }: CalculatorScreenProps) {
   const { colors } = useTheme();
+  const { width, height } = useWindowDimensions();
   const [input, setInput] = useState('');
   const [lastEquation, setLastEquation] = useState('');
   const [angleMode, setAngleMode] = useState<AngleMode>('DEG');
+
+  // Dynamic button sizing that adjusts itself based on the phone screen size
+  const isTabletOrLarge = width >= 600;
+
+  const buttonMetrics = useMemo(() => {
+    if (scientific) {
+      // 8 rows of buttons
+      const targetHeight = Math.min(height * 0.58, 480);
+      const btnHeight = Math.max(34, Math.min(48, Math.floor((targetHeight - (7 * 4)) / 8)));
+      const btnFontSize = Math.max(12, Math.min(16, Math.round(btnHeight * 0.38)));
+      return { height: btnHeight, fontSize: btnFontSize };
+    }
+    // 5 rows of buttons for basic mode
+    const targetHeight = Math.min(height * 0.52, 420);
+    const btnHeight = Math.max(48, Math.min(68, Math.floor((targetHeight - (4 * 7)) / 5)));
+    const btnFontSize = Math.max(20, Math.min(27, Math.round(btnHeight * 0.42)));
+    return { height: btnHeight, fontSize: btnFontSize };
+  }, [height, scientific]);
 
   const preview = useMemo(() => {
     if (!input) return '0';
@@ -126,7 +152,13 @@ export default function CalculatorScreen({ scientific = false }: CalculatorScree
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, scientific && styles.scientificContainer]}>
+      <View
+        style={[
+          styles.container,
+          scientific && styles.scientificContainer,
+          isTabletOrLarge && styles.tabletContainer,
+        ]}
+      >
         <Header
           title={scientific ? 'Scientific' : 'Basic'}
           subtitle="ALL IN ONE"
@@ -137,25 +169,49 @@ export default function CalculatorScreen({ scientific = false }: CalculatorScree
           modeBadge={scientific ? angleMode : undefined}
           detail={scientific ? `${angleMode}  ·  SCIENTIFIC CALCULATOR` : 'BASIC CALCULATOR'}
         />
-        <ScrollView
-          bounces={false}
-          contentContainerStyle={styles.keypad}
-          showsVerticalScrollIndicator={false}
-        >
-          {visibleRows.map((row, rowIndex) => (
-            <View key={`row-${rowIndex}`} style={styles.row}>
-              {row.map(({ label, variant }) => (
-                <CalculatorButton
-                  key={label}
-                  label={label}
-                  variant={variant}
-                  compact={scientific}
-                  onPress={() => label === '=' ? void calculate() : append(label)}
-                />
+        <View style={styles.keypadWrapper}>
+          {scientific ? (
+            <ScrollView
+              bounces={false}
+              contentContainerStyle={styles.keypad}
+              showsVerticalScrollIndicator={false}
+            >
+              {visibleRows.map((row, rowIndex) => (
+                <View key={`row-${rowIndex}`} style={styles.row}>
+                  {row.map(({ label, variant }) => (
+                    <CalculatorButton
+                      key={label}
+                      label={label}
+                      variant={variant}
+                      compact={true}
+                      buttonHeight={buttonMetrics.height}
+                      fontSize={buttonMetrics.fontSize}
+                      onPress={() => label === '=' ? void calculate() : append(label)}
+                    />
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.keypad}>
+              {visibleRows.map((row, rowIndex) => (
+                <View key={`row-${rowIndex}`} style={styles.row}>
+                  {row.map(({ label, variant }) => (
+                    <CalculatorButton
+                      key={label}
+                      label={label}
+                      variant={variant}
+                      compact={false}
+                      buttonHeight={buttonMetrics.height}
+                      fontSize={buttonMetrics.fontSize}
+                      onPress={() => label === '=' ? void calculate() : append(label)}
+                    />
+                  ))}
+                </View>
               ))}
             </View>
-          ))}
-        </ScrollView>
+          )}
+        </View>
         <Text style={[styles.footer, { color: colors.muted }]}>Designed for everyday math</Text>
       </View>
     </SafeAreaView>
@@ -169,22 +225,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 4,
+    paddingBottom: 2,
+    justifyContent: 'space-between',
   },
   scientificContainer: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
+  },
+  tabletContainer: {
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  keypadWrapper: {
+    justifyContent: 'flex-end',
+    marginTop: 4,
   },
   keypad: {
-    paddingTop: 2,
-    paddingBottom: 2,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   footer: {
-    paddingVertical: 4,
-    fontSize: 11,
+    paddingVertical: 2,
+    fontSize: 10,
     textAlign: 'center',
   },
 });
